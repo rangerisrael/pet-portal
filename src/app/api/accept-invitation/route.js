@@ -3,6 +3,14 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(request) {
   try {
+    // Validate environment variables at runtime
+    if (!process.env.NEXT_PUBLIC_PET_PORTAL_URL || !process.env.NEXT_PUBLIC_PET_PORTAL_ANON) {
+      console.error('❌ Missing Supabase environment variables in API route');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
     const { staff_id } = await request.json();
 
     if (!staff_id) {
@@ -66,6 +74,14 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    // Validate environment variables at runtime
+    if (!process.env.NEXT_PUBLIC_PET_PORTAL_URL || !process.env.NEXT_PUBLIC_PET_PORTAL_ANON) {
+      console.error('❌ Missing Supabase environment variables in API route');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
     const { searchParams } = new URL(request.url);
     const staff_id = searchParams.get('staff_id');
 

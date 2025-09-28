@@ -1,26 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Debug environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_PET_PORTAL_ANON;
+// Get environment variables with fallbacks for build time
+const supabaseUrl = process.env.NEXT_PUBLIC_PET_PORTAL_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_PET_PORTAL_ANON || '';
 
-console.log("🔧 Supabase Configuration:");
-console.log("URL:", supabaseUrl ? "✅ Set" : "❌ Missing");
-console.log("Anon Key:", supabaseAnonKey ? "✅ Set" : "❌ Missing");
+// Only log and validate in runtime, not during build
+if (typeof window !== 'undefined' || process.env.NODE_ENV === 'development') {
+  console.log("🔧 Supabase Configuration:");
+  console.log("URL:", supabaseUrl ? "✅ Set" : "❌ Missing");
+  console.log("Anon Key:", supabaseAnonKey ? "✅ Set" : "❌ Missing");
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("❌ Missing Supabase environment variables!");
-  console.error("Required: NEXT_PUBLIC_PET_PORTAL_URL, NEXT_PUBLIC_PET_PORTAL_ANON");
-  console.error("Current URL:", supabaseUrl);
-  console.error("Current Key:", supabaseAnonKey ? "Present but hidden" : "Missing");
-
-  // Don't create client with undefined values
-  throw new Error("Supabase configuration is missing. Please check your environment variables.");
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("❌ Missing Supabase environment variables!");
+    console.error("Required: NEXT_PUBLIC_PET_PORTAL_URL, NEXT_PUBLIC_PET_PORTAL_ANON");
+    console.error("Current URL:", supabaseUrl);
+    console.error("Current Key:", supabaseAnonKey ? "Present but hidden" : "Missing");
+  }
 }
 
+// Create client with fallback values to prevent build errors
 export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey,
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
   {
     auth: {
       autoRefreshToken: true,
