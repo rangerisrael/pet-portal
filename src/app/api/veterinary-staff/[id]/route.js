@@ -1,23 +1,39 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Create Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_PET_PORTAL_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+// Function to create Supabase admin client safely
+function createSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-);
+  });
+}
+
+// Create Supabase admin client
+const supabaseAdmin = createSupabaseAdmin();
 
 // GET - Get single veterinary staff
 export async function GET(request, { params }) {
   try {
     const { id } = params;
     console.log("🔍 API: Getting veterinary staff:", id);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     const { data: staffData, error } = await supabaseAdmin
       .from("veterinary_staff")
@@ -68,6 +84,14 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const updates = await request.json();
     console.log("✏️ API: Updating veterinary staff:", id, updates);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     const { data: updatedStaff, error } = await supabaseAdmin
       .from("veterinary_staff")
@@ -126,6 +150,14 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = params;
     console.log("🗑️ API: Deleting veterinary staff:", id);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     const { error } = await supabaseAdmin
       .from("veterinary_staff")

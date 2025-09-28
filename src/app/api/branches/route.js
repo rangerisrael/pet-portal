@@ -1,22 +1,73 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Create Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_PET_PORTAL_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+// Function to create Supabase admin client safely
+function createSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-);
+  });
+}
+
+// Create Supabase admin client
+const supabaseAdmin = createSupabaseAdmin();
 
 // GET - List all branches
 export async function GET(request) {
   try {
     console.log("🏢 API: Fetching branches...");
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      console.log("⚠️ Supabase admin client not available, returning mock data");
+
+      // Return mock data when Supabase is not configured
+      const mockBranches = [
+        {
+          branch_id: 1,
+          uuid: "550e8400-e29b-41d4-a716-446655440001",
+          branch_code: "BR001",
+          branch_name: "Naga",
+          branch_type: "main-branch",
+          created_at: "2024-01-15T10:30:00Z",
+          updated_at: "2024-01-15T10:30:00Z"
+        },
+        {
+          branch_id: 2,
+          uuid: "550e8400-e29b-41d4-a716-446655440002",
+          branch_code: "BR002",
+          branch_name: "Pili",
+          branch_type: "sub-branch",
+          created_at: "2024-01-16T11:30:00Z",
+          updated_at: "2024-01-16T11:30:00Z"
+        },
+        {
+          branch_id: 3,
+          uuid: "550e8400-e29b-41d4-a716-446655440003",
+          branch_code: "BR003",
+          branch_name: "Legazpi",
+          branch_type: "sub-branch",
+          created_at: "2024-01-17T12:00:00Z",
+          updated_at: "2024-01-17T12:00:00Z"
+        }
+      ];
+
+      return NextResponse.json({
+        success: true,
+        data: mockBranches,
+        message: "Using mock data - Supabase not configured",
+        source: "mock"
+      });
+    }
 
     const { data: branchesData, error: branchesError } = await supabaseAdmin
       .from("vet_owner_branches")

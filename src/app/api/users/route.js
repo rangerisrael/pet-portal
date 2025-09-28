@@ -1,29 +1,34 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// Create Supabase admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_PET_PORTAL_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY, // This should be in your .env file
-  {
+// Function to create Supabase admin client safely
+function createSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+      persistSession: false
+    }
+  });
+}
+
+// Create Supabase admin client
+const supabaseAdmin = createSupabaseAdmin();
 
 export async function GET(request) {
   try {
     console.log("🔍 API: Fetching users with admin client...");
 
-    // Verify we have the service role key
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error(
-        "❌ SUPABASE_SERVICE_ROLE_KEY not found in environment variables"
-      );
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: "Service role key not configured" },
+        { error: 'Server configuration error' },
         { status: 500 }
       );
     }
@@ -163,6 +168,14 @@ export async function POST(request) {
   try {
     const userData = await request.json();
     console.log("➕ API: Creating user:", userData.email);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     // Create auth user
     const { data: authData, error: authError } =

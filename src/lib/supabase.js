@@ -1,28 +1,28 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Get environment variables with fallbacks for build time
-const supabaseUrl = process.env.NEXT_PUBLIC_PET_PORTAL_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_PET_PORTAL_ANON || '';
+// Get environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_PET_PORTAL_ANON;
 
-// Only log and validate in runtime, not during build
-if (typeof window !== 'undefined' || process.env.NODE_ENV === 'development') {
-  console.log("🔧 Supabase Configuration:");
-  console.log("URL:", supabaseUrl ? "✅ Set" : "❌ Missing");
-  console.log("Anon Key:", supabaseAnonKey ? "✅ Set" : "❌ Missing");
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("❌ Missing Supabase environment variables!");
-    console.error("Required: NEXT_PUBLIC_PET_PORTAL_URL, NEXT_PUBLIC_PET_PORTAL_ANON");
-    console.error("Current URL:", supabaseUrl);
-    console.error("Current Key:", supabaseAnonKey ? "Present but hidden" : "Missing");
+// Function to create Supabase client safely
+function createSupabaseClient() {
+  // Only log and validate in runtime, not during build
+  if (typeof window !== 'undefined' || process.env.NODE_ENV === 'development') {
+    console.log("🔧 Supabase Configuration:");
+    console.log("URL:", supabaseUrl ? "✅ Set" : "❌ Missing");
+    console.log("Anon Key:", supabaseAnonKey ? "✅ Set" : "❌ Missing");
   }
-}
 
-// Create client with fallback values to prevent build errors
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
-  {
+  // Don't create client if environment variables are missing
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (typeof window !== 'undefined' || process.env.NODE_ENV === 'development') {
+      console.error("❌ Missing Supabase environment variables!");
+      console.error("Required: NEXT_PUBLIC_PET_PORTAL_URL, NEXT_PUBLIC_PET_PORTAL_ANON");
+    }
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -33,8 +33,11 @@ export const supabase = createClient(
         'X-Client-Info': 'pet-portal-client'
       }
     }
-  }
-);
+  });
+}
+
+// Export the client or null
+export const supabase = createSupabaseClient();
 
 // Test connection and URL accessibility
 if (typeof window !== 'undefined') {

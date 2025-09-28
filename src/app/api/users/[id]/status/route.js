@@ -1,17 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Create Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_PET_PORTAL_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+// Function to create Supabase admin client safely
+function createSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-);
+  });
+}
+
+// Create Supabase admin client
+const supabaseAdmin = createSupabaseAdmin();
 
 // POST - Toggle user status
 export async function POST(request, { params }) {
@@ -21,6 +29,14 @@ export async function POST(request, { params }) {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
 
     console.log("🔄 API: Toggling user status:", id, currentStatus, "->", newStatus);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     if (newStatus === "inactive") {
       // Ban user

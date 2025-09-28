@@ -1,23 +1,39 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// Create Supabase admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_PET_PORTAL_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+// Function to create Supabase admin client safely
+function createSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_PET_PORTAL_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+      persistSession: false
+    }
+  });
+}
+
+// Create Supabase admin client
+const supabaseAdmin = createSupabaseAdmin();
 
 // GET - Get single user
 export async function GET(request, { params }) {
   try {
     const { id } = params;
     console.log("🔍 API: Getting user:", id);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     // Get user from auth admin
     const { data: userData, error } =
@@ -130,6 +146,14 @@ export async function PUT(request, { params }) {
     const updates = await request.json();
     console.log("✏️ API: Updating user:", id, updates);
 
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
     // Update auth user
     const authUpdates = {};
     if (updates.email) authUpdates.email = updates.email;
@@ -218,6 +242,14 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = params;
     console.log("🗑️ API: Deleting user:", id);
+
+    // Check if Supabase admin client is available
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
     // Delete from profiles first
     await supabaseAdmin.from("profiles").delete().eq("id", id);
