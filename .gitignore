@@ -46,3 +46,5 @@ next-env.d.ts
 system-cache/
 public/assets/profile/profile-*
 public/assets/pet-record/pet-temp-*
+.claude
+README.md
