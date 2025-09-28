@@ -1,61 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(process.cwd(), "public", "assets", "profile");
-
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-    );
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(new Error("Only image files are allowed!"));
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: fileFilter,
-});
-
-const uploadMiddleware = upload.single("image");
-
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-}
+import { NextResponse } from "next/server";
+import {
+  uploadFileToStorage,
+  validateFile,
+  deleteFileFromStorage,
+} from "@/utils/storage";
 
 export async function POST(request) {
   try {
@@ -66,53 +14,57 @@ export async function POST(request) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Only image files are allowed (JPEG, PNG, GIF, WebP)" },
-        { status: 400 }
-      );
-    }
+    // Validate file
+    const validation = validateFile(file, {
+      allowedTypes: [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ],
+      maxSize: 5 * 1024 * 1024, // 5MB
+    });
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB" },
-        { status: 400 }
-      );
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // Generate unique filename
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const extension = path.extname(file.name);
-    const filename = `profile-${uniqueSuffix}${extension}`;
+    const timestamp = Date.now();
+    const randomSuffix = Math.round(Math.random() * 1e9);
+    const extension = file.name.split(".").pop();
+    const filename = `profile-${timestamp}-${randomSuffix}.${extension}`;
 
-    // Create upload directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), "public", "assets", "profile");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    // Upload to Supabase Storage
+    console.log("🚀 Attempting upload to Supabase Storage...");
+    const uploadResult = await uploadFileToStorage(
+      file,
+      "pet-portal",
+      "profiles",
+      filename
+    );
+
+    if (!uploadResult.success) {
+      console.error("❌ Upload to storage failed:", uploadResult.error);
+      return NextResponse.json(
+        {
+          error: "Failed to upload file to storage",
+          details: uploadResult.error,
+        },
+        { status: 500 }
+      );
     }
 
-    // Save file
-    const filePath = path.join(uploadDir, filename);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    console.log("✅ Upload successful!");
 
     // Return success response with file info
-    const fileUrl = `/assets/profile/${filename}`;
-
     return NextResponse.json(
       {
         message: "File uploaded successfully",
-        filename: filename,
-        url: fileUrl,
+        filename: uploadResult.data.filename,
+        url: uploadResult.data.publicUrl,
+        path: uploadResult.data.path,
         size: file.size,
         type: file.type,
       },
@@ -137,30 +89,50 @@ export async function GET() {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filename = searchParams.get('filename');
+    const filename = searchParams.get("filename");
+    const filePath = searchParams.get("path"); // Full storage path
 
-    if (!filename) {
-      return NextResponse.json({ error: "Filename is required" }, { status: 400 });
+    if (!filename && !filePath) {
+      return NextResponse.json(
+        { error: "Filename or path is required" },
+        { status: 400 }
+      );
     }
 
     // Security check - only allow deletion of profile images
-    if (!filename.startsWith('profile-') || filename.includes('..') || filename.includes('/')) {
+    if (
+      filename &&
+      (!filename.startsWith("profile-") ||
+        filename.includes("..") ||
+        filename.includes("/"))
+    ) {
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
 
-    // Construct file path
-    const filePath = path.join(process.cwd(), "public", "assets", "profile", filename);
+    // Construct storage path
+    const storageFilePath = filePath || `profiles/${filename}`;
 
-    // Check if file exists and delete it
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`🗑️ Deleted old profile image: ${filename}`);
-    } else {
-      console.log(`⚠️ File not found for deletion: ${filename}`);
+    // Delete from Supabase Storage
+    const deleteResult = await deleteFileFromStorage(
+      "uploads",
+      storageFilePath
+    );
+
+    if (!deleteResult.success) {
+      console.error("Delete from storage failed:", deleteResult.error);
+      return NextResponse.json(
+        { error: "Failed to delete file from storage" },
+        { status: 500 }
+      );
     }
 
+    console.log(`🗑️ Deleted profile image: ${storageFilePath}`);
+
     return NextResponse.json(
-      { message: "File deleted successfully", filename },
+      {
+        message: "File deleted successfully",
+        filename: filename || storageFilePath,
+      },
       { status: 200 }
     );
   } catch (error) {

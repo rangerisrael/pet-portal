@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-import { existsSync } from 'fs';
+import { NextResponse } from 'next/server';
+import { uploadFileToStorage, validateFile, deleteFileFromStorage } from '@/utils/storage';
 
 export async function POST(request) {
   try {
@@ -17,49 +15,38 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Pet ID is required' }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.' },
-        { status: 400 }
-      );
-    }
+    // Validate file
+    const validation = validateFile(file, {
+      allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+      maxSize: 5 * 1024 * 1024 // 5MB
+    });
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
-        { status: 400 }
-      );
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Create upload directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), 'public', 'assets', 'pet-record');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // Generate unique filename
     const timestamp = Date.now();
-    const fileExtension = path.extname(file.name);
-    const filename = `pet-${petId}-${timestamp}${fileExtension}`;
-    const filePath = path.join(uploadDir, filename);
+    const extension = file.name.split('.').pop();
+    const filename = `pet-${petId}-${timestamp}.${extension}`;
 
-    // Write file to disk
-    await writeFile(filePath, buffer);
+    // Upload to Supabase Storage
+    const uploadResult = await uploadFileToStorage(file, 'uploads', 'pet-records', filename);
 
-    // Return the public URL
-    const publicUrl = `/assets/pet-record/${filename}`;
+    if (!uploadResult.success) {
+      console.error('Upload to storage failed:', uploadResult.error);
+      return NextResponse.json(
+        { error: 'Failed to upload image to storage' },
+        { status: 500 }
+      );
+    }
 
+    // Return success response
     return NextResponse.json({
       success: true,
-      url: publicUrl,
-      filename: filename
+      url: uploadResult.data.publicUrl,
+      filename: uploadResult.data.filename,
+      path: uploadResult.data.path
     });
 
   } catch (error) {
@@ -75,26 +62,38 @@ export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename');
+    const filePath = searchParams.get('path'); // Full storage path
 
-    if (!filename) {
-      return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
+    if (!filename && !filePath) {
+      return NextResponse.json({ error: 'Filename or path is required' }, { status: 400 });
     }
 
     // Security check: ensure filename doesn't contain path traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    if (filename && (filename.includes('..') || filename.includes('/') || filename.includes('\\'))) {
       return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), 'public', 'assets', 'pet-record', filename);
+    // Construct storage path
+    const storageFilePath = filePath || `pet-records/${filename}`;
 
-    // Check if file exists and delete it
-    if (existsSync(filePath)) {
-      const fs = require('fs').promises;
-      await fs.unlink(filePath);
-      return NextResponse.json({ success: true, message: 'File deleted successfully' });
-    } else {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    // Delete from Supabase Storage
+    const deleteResult = await deleteFileFromStorage('uploads', storageFilePath);
+
+    if (!deleteResult.success) {
+      console.error('Delete from storage failed:', deleteResult.error);
+      return NextResponse.json(
+        { error: 'Failed to delete image from storage' },
+        { status: 500 }
+      );
     }
+
+    console.log(`🗑️ Deleted pet image: ${storageFilePath}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'File deleted successfully',
+      filename: filename || storageFilePath
+    });
 
   } catch (error) {
     console.error('Error deleting pet image:', error);
