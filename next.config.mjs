@@ -16,6 +16,16 @@ const nextConfig = {
       "jspdf",
     ],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'uthtoslhwrsnkcmlhvfy.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   turbopack: {
     root: __dirname,
   },

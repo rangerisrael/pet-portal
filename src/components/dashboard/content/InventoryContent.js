@@ -1,5 +1,24 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { Plus, Search, Filter, Download, RefreshCw, Eye, Edit, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
+  RefreshCw,
+  Eye,
+  Edit,
+  Trash2,
+  Package,
+  Stethoscope,
+  Syringe,
+  TrendingDown,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  ShoppingCart,
+  Pill,
+  CheckCircle,
+} from "lucide-react";
 import { toast } from "react-toastify";
 import useInventory from "@/hooks/useInventory";
 import useBranches from "@/hooks/useBranches";
@@ -10,8 +29,12 @@ import InventoryTabs from "./InventoryTabs";
 import InventoryStats from "./InventoryStats";
 
 // Lazy load modal components for better performance
-const StockRequestResultModal = lazy(() => import("@/components/dashboard/modal/StockRequestResultModal"));
-const StockRequestRejectionModal = lazy(() => import("@/components/dashboard/modal/StockRequestRejectionModal"));
+const StockRequestResultModal = lazy(() =>
+  import("@/components/dashboard/modal/StockRequestResultModal")
+);
+const StockRequestRejectionModal = lazy(() =>
+  import("@/components/dashboard/modal/StockRequestRejectionModal")
+);
 
 const InventoryContent = ({ user, userRole, branchName, branchID }) => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -95,7 +118,6 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
     loadInventoryData,
   } = useInventory() || {};
 
-
   // Transform inventory data to match component expectations
   const getInventoryWithBranches = () => {
     console.log("🔍 getInventoryWithBranches called");
@@ -107,7 +129,11 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
 
     // Check if we have real inventory data (not loading and has items)
     if (!loading && inventoryItems && inventoryItems.length > 0) {
-      console.log("✅ Using real inventory data", inventoryItems.length, "items");
+      console.log(
+        "✅ Using real inventory data",
+        inventoryItems.length,
+        "items"
+      );
       return inventoryItems.map((item) => {
         // Find the correct branch for this inventory item
         const itemBranch =
@@ -124,13 +150,23 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
           unit_cost: item.unit_cost || 0,
           selling_price: item.selling_price || 0,
           current_stock: item.current_stock || 0,
-          minimum_stock: item.minimum_stock_level || item.minimum_threshold || 0,
-          minimum_threshold: item.minimum_stock_level || item.minimum_threshold || 0,
-          reorder_point: item.reorder_point || item.minimum_stock_level || item.minimum_threshold || 0,
+          minimum_stock:
+            item.minimum_stock_level || item.minimum_threshold || 0,
+          minimum_threshold:
+            item.minimum_stock_level || item.minimum_threshold || 0,
+          reorder_point:
+            item.reorder_point ||
+            item.minimum_stock_level ||
+            item.minimum_threshold ||
+            0,
           category: item.item_type || "Uncategorized",
           supplier: item.supplier || "Default Supplier",
           brand: item.brand || "",
-          status: item.status || (item.current_stock <= (item.minimum_threshold || 0) ? "low_stock" : "active"),
+          status:
+            item.status ||
+            (item.current_stock <= (item.minimum_threshold || 0)
+              ? "low_stock"
+              : "active"),
           has_expiration: item.has_expiration || false,
           last_updated: item.last_updated || new Date().toISOString(),
           branch_id: item.branch_id || itemBranch?.branch_id,
@@ -153,7 +189,7 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
       loading,
       inventoryItemsLength: inventoryItems?.length,
       branchesLength: branches?.length,
-      hasInventoryItems: !!inventoryItems
+      hasInventoryItems: !!inventoryItems,
     });
 
     // Ensure we have branches before creating mock data
@@ -202,8 +238,8 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
           item_type: "vaccine",
           description: "Annual rabies vaccination",
           unit_of_measure: "vials",
-          unit_cost: 8.50,
-          selling_price: 25.00,
+          unit_cost: 8.5,
+          selling_price: 25.0,
           current_stock: 25 + index * 5,
           minimum_stock: 10,
           minimum_threshold: 10,
@@ -211,7 +247,7 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
           category: "Vaccines",
           supplier: "VetMed Supply Co.",
           brand: "VetVaccines",
-          status: (25 + index * 5) <= 10 ? "low_stock" : "active",
+          status: 25 + index * 5 <= 10 ? "low_stock" : "active",
           has_expiration: true,
           last_updated: new Date().toISOString(),
           branch_id: branch.branch_id,
@@ -234,7 +270,7 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
           item_type: "medicine",
           description: "Antibiotic for bacterial infections",
           unit_of_measure: "tablets",
-          unit_cost: 0.50,
+          unit_cost: 0.5,
           selling_price: 1.25,
           current_stock: Math.max(15 - index * 3, 0),
           minimum_stock: 10,
@@ -243,7 +279,7 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
           category: "Medicines",
           supplier: "PharmVet Inc.",
           brand: "MedPills",
-          status: (15 - index * 3) <= 10 ? "low_stock" : "active",
+          status: 15 - index * 3 <= 10 ? "low_stock" : "active",
           has_expiration: true,
           last_updated: new Date().toISOString(),
           branch_id: branch.branch_id,
@@ -275,7 +311,7 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
           category: "Surgical Supplies",
           supplier: "Medical Supply Co.",
           brand: "SafeGloves",
-          status: (100 + index * 20) <= 50 ? "low_stock" : "active",
+          status: 100 + index * 20 <= 50 ? "low_stock" : "active",
           has_expiration: false,
           last_updated: new Date().toISOString(),
           branch_id: branch.branch_id,
@@ -328,7 +364,7 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
   // TEMPORARY FIX: If inventory is empty, use direct hook data with proper mapping
   if (!inventory || inventory.length === 0) {
     console.log("🔧 Using direct hook data as fallback");
-    inventory = (inventoryItems || []).map(item => ({
+    inventory = (inventoryItems || []).map((item) => ({
       id: item.id,
       inventory_items: {
         item_name: item.item_name || item.name,
@@ -336,16 +372,21 @@ const InventoryContent = ({ user, userRole, branchName, branchID }) => {
         description: item.description,
       },
       current_stock: item.current_stock || 0,
-      minimum_threshold: item.minimum_threshold || item.minimum_stock_level || 0,
+      minimum_threshold:
+        item.minimum_threshold || item.minimum_stock_level || 0,
       branch_id: item.branch_id,
       vet_owner_branches: item.vet_owner_branches || {
-        branch_name: "Unknown Branch"
-      }
+        branch_name: "Unknown Branch",
+      },
     }));
   }
 
   // Debug: Force display some test data if inventory is empty
-  console.log("📊 Final inventory for display:", inventory?.length || 0, "items");
+  console.log(
+    "📊 Final inventory for display:",
+    inventory?.length || 0,
+    "items"
+  );
   if (inventory && inventory.length > 0) {
     console.log("📦 Sample inventory item:", inventory[0]);
   }
@@ -1428,12 +1469,13 @@ const InventoryTab = ({
     // Text search
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter((item) =>
-        item.name?.toLowerCase().includes(search) ||
-        item.item_name?.toLowerCase().includes(search) ||
-        item.item_code?.toLowerCase().includes(search) ||
-        item.description?.toLowerCase().includes(search) ||
-        item.brand?.toLowerCase().includes(search)
+      filtered = filtered.filter(
+        (item) =>
+          item.name?.toLowerCase().includes(search) ||
+          item.item_name?.toLowerCase().includes(search) ||
+          item.item_code?.toLowerCase().includes(search) ||
+          item.description?.toLowerCase().includes(search) ||
+          item.brand?.toLowerCase().includes(search)
       );
     }
 
@@ -1460,7 +1502,9 @@ const InventoryTab = ({
       switch (filters.stockLevel) {
         case "low_stock":
           filtered = filtered.filter(
-            (item) => item.current_stock <= (item.reorder_point || item.minimum_threshold || 0)
+            (item) =>
+              item.current_stock <=
+              (item.reorder_point || item.minimum_threshold || 0)
           );
           break;
         case "out_of_stock":
@@ -1468,7 +1512,9 @@ const InventoryTab = ({
           break;
         case "in_stock":
           filtered = filtered.filter(
-            (item) => item.current_stock > (item.reorder_point || item.minimum_threshold || 0)
+            (item) =>
+              item.current_stock >
+              (item.reorder_point || item.minimum_threshold || 0)
           );
           break;
       }
@@ -1497,7 +1543,7 @@ const InventoryTab = ({
               className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Filter className="w-4 h-4" />
-              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+              <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
             </button>
             {showFilters && (
               <button
@@ -1527,124 +1573,138 @@ const InventoryTab = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {/* Search */}
             <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by item name, code, description..."
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
-          </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by item name, code, description..."
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
 
-          {/* Item Type Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Item Type
-            </label>
-            <select
-              value={filters.itemType?.[0] || ""}
-              onChange={(e) => updateFilter("itemType", e.target.value ? [e.target.value] : [])}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Types</option>
-              {filterOptions.itemTypes?.map(type => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Item Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Item Type
+              </label>
+              <select
+                value={filters.itemType?.[0] || ""}
+                onChange={(e) =>
+                  updateFilter(
+                    "itemType",
+                    e.target.value ? [e.target.value] : []
+                  )
+                }
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Types</option>
+                {filterOptions.itemTypes?.map((type) => (
+                  <option key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Stock Level Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stock Level
-            </label>
-            <select
-              value={filters.stockLevel || ""}
-              onChange={(e) => updateFilter("stockLevel", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Stock Levels</option>
-              {filterOptions.stockLevels?.map(level => (
-                <option key={level.value} value={level.value}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Stock Level Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stock Level
+              </label>
+              <select
+                value={filters.stockLevel || ""}
+                onChange={(e) => updateFilter("stockLevel", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Stock Levels</option>
+                {filterOptions.stockLevels?.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Category Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
-            <select
-              value={filters.category?.[0] || ""}
-              onChange={(e) => updateFilter("category", e.target.value ? [e.target.value] : [])}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Categories</option>
-              {filterOptions.categories?.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Category Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <select
+                value={filters.category?.[0] || ""}
+                onChange={(e) =>
+                  updateFilter(
+                    "category",
+                    e.target.value ? [e.target.value] : []
+                  )
+                }
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Categories</option>
+                {filterOptions.categories?.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Brand Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Brand
-            </label>
-            <select
-              value={filters.brand || ""}
-              onChange={(e) => updateFilter("brand", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Brands</option>
-              {filterOptions.brands?.map(brand => (
-                <option key={brand} value={brand}>
-                  {brand}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Brand Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Brand
+              </label>
+              <select
+                value={filters.brand || ""}
+                onChange={(e) => updateFilter("brand", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Brands</option>
+                {filterOptions.brands?.map((brand) => (
+                  <option key={brand} value={brand}>
+                    {brand}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={filters.status?.[0] || ""}
-              onChange={(e) => updateFilter("status", e.target.value ? [e.target.value] : [])}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Status</option>
-              {filterOptions.statuses?.map(status => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                </option>
-              ))}
-            </select>
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={filters.status?.[0] || ""}
+                onChange={(e) =>
+                  updateFilter("status", e.target.value ? [e.target.value] : [])
+                }
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Status</option>
+                {filterOptions.statuses?.map((status) => (
+                  <option key={status} value={status}>
+                    {status.charAt(0).toUpperCase() +
+                      status.slice(1).replace("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
 
           {/* Results Counter */}
           <div className="mt-4">
             <div className="text-sm text-gray-600">
-              <strong>Showing:</strong> {loading ? "..." : displayInventory.length} items
+              <strong>Showing:</strong>{" "}
+              {loading ? "..." : displayInventory.length} items
             </div>
           </div>
         </div>
@@ -1680,10 +1740,7 @@ const InventoryTab = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td
-                  colSpan="7"
-                  className="px-6 py-12 text-center"
-                >
+                <td colSpan="7" className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-gray-600">Loading inventory items...</p>
@@ -1807,11 +1864,14 @@ const StockRequestsTab = ({
     // Text search
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter((request) =>
-        request.id?.toLowerCase().includes(search) ||
-        request.inventory_items?.item_name?.toLowerCase().includes(search) ||
-        request.requesting_branch?.branch_name?.toLowerCase().includes(search) ||
-        request.target_branch?.branch_name?.toLowerCase().includes(search)
+      filtered = filtered.filter(
+        (request) =>
+          request.id?.toLowerCase().includes(search) ||
+          request.inventory_items?.item_name?.toLowerCase().includes(search) ||
+          request.requesting_branch?.branch_name
+            ?.toLowerCase()
+            .includes(search) ||
+          request.target_branch?.branch_name?.toLowerCase().includes(search)
       );
     }
 
@@ -1824,9 +1884,10 @@ const StockRequestsTab = ({
 
     // Apply branch filter
     if (filters.branch?.length > 0) {
-      filtered = filtered.filter((request) =>
-        filters.branch.includes(request.requesting_branch_id) ||
-        filters.branch.includes(request.target_branch_id)
+      filtered = filtered.filter(
+        (request) =>
+          filters.branch.includes(request.requesting_branch_id) ||
+          filters.branch.includes(request.target_branch_id)
       );
     }
 
@@ -1856,7 +1917,7 @@ const StockRequestsTab = ({
               className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Filter className="w-4 h-4" />
-              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+              <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
             </button>
             {showFilters && (
               <button
@@ -1874,137 +1935,141 @@ const StockRequestsTab = ({
       {/* Filters Section */}
       {showFilters && (
         <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {/* Search */}
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by request #, item, requester..."
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            {/* Search */}
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by request #, item, requester..."
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
 
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => updateFilter("status", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Status</option>
-              {filterOptions.statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => updateFilter("status", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Status</option>
+                {filterOptions.statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Urgency Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Priority
-            </label>
-            <select
-              value={filters.urgency}
-              onChange={(e) => updateFilter("urgency", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Priorities</option>
-              {filterOptions.urgencies.map((urgency) => (
-                <option key={urgency} value={urgency}>
-                  {urgency.charAt(0).toUpperCase() + urgency.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Urgency Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Priority
+              </label>
+              <select
+                value={filters.urgency}
+                onChange={(e) => updateFilter("urgency", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Priorities</option>
+                {filterOptions.urgencies.map((urgency) => (
+                  <option key={urgency} value={urgency}>
+                    {urgency.charAt(0).toUpperCase() + urgency.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Requester Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Requester
-            </label>
-            <select
-              value={filters.requester}
-              onChange={(e) => updateFilter("requester", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Requesters</option>
-              {filterOptions.requesters.map((requester) => (
-                <option key={requester.id + Math.random()} value={requester.id}>
-                  {requester.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Requester Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Requester
+              </label>
+              <select
+                value={filters.requester}
+                onChange={(e) => updateFilter("requester", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Requesters</option>
+                {filterOptions.requesters.map((requester) => (
+                  <option
+                    key={requester.id + Math.random()}
+                    value={requester.id}
+                  >
+                    {requester.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Branch Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Branch
-            </label>
-            <select
-              value={filters.branch}
-              onChange={(e) => updateFilter("branch", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Branches</option>
-              {filterOptions.branches.map((branch) => (
-                <option key={branch} value={branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Date Range Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              From Date
-            </label>
-            <input
-              type="date"
-              value={filters.dateFrom}
-              onChange={(e) => updateFilter("dateFrom", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              To Date
-            </label>
-            <input
-              type="date"
-              value={filters.dateTo}
-              onChange={(e) => updateFilter("dateTo", e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div className="flex items-end">
-            <div className="text-sm text-gray-600">
-              <strong>Showing:</strong> {loading ? "..." : displayRequests.length} requests
+            {/* Branch Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Branch
+              </label>
+              <select
+                value={filters.branch}
+                onChange={(e) => updateFilter("branch", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Branches</option>
+                {filterOptions.branches.map((branch) => (
+                  <option key={branch} value={branch}>
+                    {branch}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-        </div>
+
+          {/* Date Range Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                From Date
+              </label>
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => updateFilter("dateFrom", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => updateFilter("dateTo", e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <div className="text-sm text-gray-600">
+                <strong>Showing:</strong>{" "}
+                {loading ? "..." : displayRequests.length} requests
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2044,10 +2109,7 @@ const StockRequestsTab = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td
-                  colSpan="9"
-                  className="px-6 py-12 text-center"
-                >
+                <td colSpan="9" className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-gray-600">Loading stock requests...</p>
@@ -2101,8 +2163,10 @@ const StockRequestsTab = ({
                     <div>
                       <div className="font-medium">
                         {request.requester_name ||
-                         request.requested_by_name ||
-                         (request.requested_by ? `User ${request.requested_by.slice(0, 8)}...` : "System Request")}
+                          request.requested_by_name ||
+                          (request.requested_by
+                            ? `User ${request.requested_by.slice(0, 8)}...`
+                            : "System Request")}
                       </div>
                       {request.requester_email && (
                         <div className="text-xs text-gray-500">
