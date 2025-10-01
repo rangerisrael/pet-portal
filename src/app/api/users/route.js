@@ -13,8 +13,8 @@ function createSupabaseAdmin() {
   return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 }
 
@@ -28,7 +28,7 @@ export async function GET(request) {
     // Check if Supabase admin client is available
     if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: "Server configuration error" },
         { status: 500 }
       );
     }
@@ -140,6 +140,7 @@ export async function GET(request) {
         last_sign_in_at: user.last_sign_in_at,
         email_verified: user.email_confirmed_at ? true : false,
         profile_complete: profile?.profile_complete || false,
+        clinicName: profile?.clinicName || user.user_metadata?.clinicName,
         // Additional staff fields
         staff_id: staffRecord?.staff_id || null,
         invitation_accepted: staffRecord?.invitation_accepted || null,
@@ -172,7 +173,7 @@ export async function POST(request) {
     // Check if Supabase admin client is available
     if (!supabaseAdmin) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: "Server configuration error" },
         { status: 500 }
       );
     }

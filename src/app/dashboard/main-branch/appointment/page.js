@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import DashboardMainLayout from "@/components/common/dashboard/MainLayout";
 import DashboardContent from "@/components/dashboard/content/DashboardContent";
-import { petOwnerItems } from "@/components/utils/link-data";
+import { mainBranchItems, petOwnerItems } from "@/components/utils/link-data";
 import { useAppointments } from "@/hooks/useAppointments";
 import useAuth from "@/hooks/useAuth";
 import { usePets } from "@/hooks/usePets";
@@ -37,7 +37,7 @@ const DashboardPetOwnerAppointment = () => {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
 
   // Use custom hooks for data management with safe defaults
-  const appointmentHook = useAppointments(user) || {};
+  const appointmentHook = useAppointments(user, "main-branch") || {};
 
   const {
     appointments = [],
@@ -50,7 +50,7 @@ const DashboardPetOwnerAppointment = () => {
     <>
       {" "}
       <DashboardMainLayout
-        navList={petOwnerItems}
+        navList={mainBranchItems}
         selectedPageRender={
           <AppointmentsContent
             filterStatus={filterStatus}
@@ -66,7 +66,7 @@ const DashboardPetOwnerAppointment = () => {
             appointmentsData={appointments}
           />
         }
-        role={"pet-owner"}
+        role={"main-branch"}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />

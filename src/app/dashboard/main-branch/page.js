@@ -1,10 +1,7 @@
 "use client";
 
-import { lazy, Suspense } from "react";
 import DashboardMainLayout from "@/components/common/dashboard/MainLayout";
-
-// Lazy load heavy dashboard content
-const DashboardContent = lazy(() => import("@/components/dashboard/content/DashboardContent"));
+import DashboardContent from "@/components/dashboard/content/DashboardContent";
 import { mainBranchItems } from "@/components/utils/link-data";
 import { useAppointments } from "@/hooks/useAppointments";
 import useAuth from "@/hooks/useAuth";
@@ -17,6 +14,7 @@ import {
 } from "@/utils/dashboard-calculations";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+
 const DashboardMainBranch = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -55,17 +53,15 @@ const DashboardMainBranch = () => {
     <DashboardMainLayout
       navList={mainBranchItems}
       selectedPageRender={
-        <Suspense fallback={<div className="flex justify-center items-center h-64">Loading dashboard...</div>}>
-          <DashboardContent
-            user={user}
-            stats={stats}
-            appointments={appointments}
-            revenueData={revenueData}
-            petTypeData={petTypeData}
-            appointmentsData={appointmentsData}
-            setShowCreateForm={() => setActiveTab("appointments")}
-          />
-        </Suspense>
+        <DashboardContent
+          user={user}
+          stats={stats}
+          appointments={appointments}
+          revenueData={revenueData}
+          petTypeData={petTypeData}
+          appointmentsData={appointmentsData}
+          setShowCreateForm={() => setActiveTab("appointments")}
+        />
       }
       role={"main-branch"}
       activeTab={activeTab}

@@ -15,7 +15,7 @@ export const useAppointments = (user, userRole = 'pet-owner') => {
 
   const fetchAppointments = async () => {
     // For vet-owner, fetch all appointments; for pet-owner, only their own
-    if (!user?.id && userRole !== 'vet-owner') {
+    if (!user?.id && userRole !== 'vet-owner' && userRole !== 'main-branch') {
       setAppointments([]);
       setLoading(false);
       return;
@@ -26,11 +26,37 @@ export const useAppointments = (user, userRole = 'pet-owner') => {
 
       let query = supabase.from("appointment_details").select("*");
 
-      // For pet-owner, filter by owner_id; for vet-owner, get all appointments
+      // For pet-owner, filter by owner_id
       if (userRole === 'pet-owner' && user?.id) {
         query = query.eq("owner_id", user.id);
         console.log('🔒 Fetching appointments for pet-owner:', user.id);
-      } else if (userRole === 'vet-owner') {
+        console.log('🔍 Pet-owner user object:', user);
+      }
+      // For main-branch, get branch_id from veterinary_staff table using assigned_id
+      else if (userRole === 'main-branch' && user?.id) {
+        console.log('🏥 Fetching branch for main-branch user:', user.id);
+
+        // Get staff record to find designated_branch_id
+        const { data: staffData, error: staffError } = await supabase
+          .from("veterinary_staff")
+          .select("designated_branch_id, staff_name")
+          .eq("assigned_id", user.id)
+          .single();
+
+        if (staffError) {
+          console.log('❌ Error fetching staff data:', staffError);
+        } else if (staffData?.designated_branch_id) {
+          console.log('🏥 Found designated branch:', staffData.designated_branch_id, 'for staff:', staffData.staff_name);
+          query = query.eq("branch_id", staffData.designated_branch_id);
+        } else {
+          console.log('⚠️ No designated branch found for user, showing no appointments');
+          setAppointments([]);
+          setLoading(false);
+          return;
+        }
+      }
+      // For vet-owner, get all appointments
+      else if (userRole === 'vet-owner') {
         console.log('👨‍⚕️ Fetching all appointments for vet-owner');
       }
 
@@ -38,9 +64,13 @@ export const useAppointments = (user, userRole = 'pet-owner') => {
         .order("appointment_date", { ascending: false })
         .order("appointment_time", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.log('❌ Error fetching appointments:', error);
+        throw error;
+      }
 
       console.log(`✅ Loaded ${data?.length || 0} appointments for ${userRole}`);
+      console.log('📋 Appointment data:', data);
       setAppointments(data || []);
     } catch (error) {
       console.log("Error fetching appointments:", error);
@@ -311,6 +341,96 @@ export const useAppointments = (user, userRole = 'pet-owner') => {
   useEffect(() => {
     fetchAppointments();
   }, [user]);
+
+  // Separate effect for real-time subscriptions
+  useEffect(() => {
+    // Set up real-time subscription for appointments
+    if (!user?.id && userRole !== 'vet-owner' && userRole !== 'main-branch') {
+      return;
+    }
+
+    const setupSubscription = async () => {
+      console.log('🔌 Setting up real-time subscription for appointments');
+
+      // For main-branch, get the branch_id first
+      let mainBranchId = null;
+      if (userRole === 'main-branch' && user?.id) {
+        const { data: staffData } = await supabase
+          .from("veterinary_staff")
+          .select("designated_branch_id")
+          .eq("assigned_id", user.id)
+          .single();
+
+        mainBranchId = staffData?.designated_branch_id;
+        console.log('🏥 Real-time subscription for branch:', mainBranchId);
+      }
+
+      const channel = supabase
+        .channel('appointment-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        }, (payload) => {
+          console.log('🔄 Real-time appointment update:', payload.eventType, payload);
+
+          // Helper function to check if appointment belongs to current context
+          const shouldShowAppointment = (appointmentData) => {
+            if (userRole === 'pet-owner') {
+              return appointmentData.owner_id === user.id;
+            } else if (userRole === 'main-branch') {
+              // For main-branch, check branch_id
+              return appointmentData.branch_id === mainBranchId;
+            } else if (userRole === 'vet-owner') {
+              return true; // Vet owner sees all
+            }
+            return false;
+          };
+
+          switch (payload.eventType) {
+            case 'INSERT':
+              if (!shouldShowAppointment(payload.new)) {
+                return;
+              }
+              // Fetch full appointment details to get joined data
+              console.log('➕ New appointment detected, refetching...');
+              fetchAppointments();
+              break;
+
+            case 'UPDATE':
+              if (!shouldShowAppointment(payload.new)) {
+                return;
+              }
+              // Fetch full appointment details to get joined data
+              console.log('✏️ Appointment updated, refetching...');
+              fetchAppointments();
+              break;
+
+            case 'DELETE':
+              if (!shouldShowAppointment(payload.old)) {
+                return;
+              }
+              console.log('🗑️ Appointment deleted, updating list...');
+              setAppointments((oldAppointments) =>
+                oldAppointments.filter(item => item.id !== payload.old.id)
+              );
+              break;
+
+            default:
+              break;
+          }
+        })
+        .subscribe();
+
+      // Cleanup subscription on unmount
+      return () => {
+        console.log('🔌 Unsubscribing from appointment changes');
+        channel.unsubscribe();
+      };
+    };
+
+    setupSubscription();
+  }, [user?.id, userRole]);
 
   return {
     appointments,

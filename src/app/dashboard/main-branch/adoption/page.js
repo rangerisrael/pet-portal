@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import DashboardMainLayout from "@/components/common/dashboard/MainLayout";
 import DashboardContent from "@/components/dashboard/content/DashboardContent";
-import { petOwnerItems } from "@/components/utils/link-data";
+import { mainBranchItems, petOwnerItems } from "@/components/utils/link-data";
 import { useAppointments } from "@/hooks/useAppointments";
 import useAuth from "@/hooks/useAuth";
 import { usePets } from "@/hooks/usePets";
@@ -51,7 +51,7 @@ const DashboardPetOwnerAdoption = () => {
 
   return (
     <DashboardMainLayout
-      navList={petOwnerItems}
+      navList={mainBranchItems}
       selectedPageRender={
         <AdoptionsContent
           filteredPets={[]}
@@ -70,7 +70,7 @@ const DashboardPetOwnerAdoption = () => {
           isFavorited={isFavorited}
         />
       }
-      role={"pet-owner"}
+      role={"main-branch"}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
     />

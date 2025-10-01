@@ -10,6 +10,7 @@ import {
   Search,
   Filter,
   X,
+  Building,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -355,6 +356,12 @@ const PetContent = ({
                       <div className="flex items-center">
                         <Phone size={12} className="mr-1" />
                         <span>{pet.owner_phone}</span>
+                      </div>
+                    )}
+                    {pet.owner_preferred_clinicName && (
+                      <div className="flex items-center">
+                        <Building size={12} className="mr-1" />
+                        <span>{pet.owner_preferred_clinicName}</span>
                       </div>
                     )}
                     {pet.owner_registered && (
